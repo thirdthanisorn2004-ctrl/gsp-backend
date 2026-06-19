@@ -1,0 +1,15 @@
+import sqlite3
+import os
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "relay_data.db")
+
+conn = sqlite3.connect(DB_PATH)
+cursor = conn.cursor()
+
+# สั่งลบทุกโรงที่ไม่ใช่ GSP1
+cursor.execute("DELETE FROM relays WHERE Plant != 'GSP1'")
+conn.commit()
+
+print("ลบโรงอื่นออกเรียบร้อย! ตอนนี้เหลือแค่ GSP1 แล้ว")
+conn.close()
