@@ -7,7 +7,7 @@ import uvicorn
 
 app = FastAPI(title="GSP1 Prototype API")
 
-# เปิด CORS ให้เพื่อนฝั่ง Frontend ดึงข้อมูลไปใช้ได้ไม่ติดบล็อก
+# เปิด CORS ให้เพื่อนฝั่ง Frontend ดึงข้อมูลไปใช้ได้
 app.add_middleware(
     CORSMiddleware, 
     allow_origins=["*"], 
@@ -27,13 +27,26 @@ def get_db_connection():
 def home():
     return {"message": "GSP1 Prototype API is running!", "status": "success"}
 
+# ดึงข้อมูลทั้งหมด (ลิงก์หลัก)
 @app.get("/api/relays")
 def get_all_relays():
     conn = get_db_connection()
-    # ดึงข้อมูลตรงๆ ได้เลย ไม่ต้องสั่งสลับคอลัมน์กลางอากาศให้เปลืองแรงเครื่อง
     df = pd.read_sql_query("SELECT * FROM relays", conn)
     conn.close()
     
+    return {"status": "success", "total": len(df), "data": df.to_dict(orient="records")}
+
+# ดึงข้อมูลแยกตาม Plant (ลิงก์ที่มี /GSP1 ต่อท้าย)
+@app.get("/api/relays/{plant}")
+def get_relays_by_plant(plant: str):
+    conn = get_db_connection()
+    query = f"SELECT * FROM relays WHERE Plant = '{plant.upper()}'"
+    df = pd.read_sql_query(query, conn)
+    conn.close()
+    
+    if df.empty:
+        return {"status": "error", "message": f"ไม่พบข้อมูลของ {plant}"}
+        
     return {"status": "success", "total": len(df), "data": df.to_dict(orient="records")}
 
 if __name__ == "__main__":
