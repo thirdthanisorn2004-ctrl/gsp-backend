@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <title>หน้าเว็บทดลองของ Frontend</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; padding: 20px; background-color: #f4f4f9; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); max-width: 400px; }
+        input { padding: 8px; width: 90%; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 4px; }
+        button { padding: 10px 15px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <h2>แผงควบคุม Relay (แถวที่ 1)</h2>
+        <p>ลองพิมพ์ข้อมูลใหม่แล้วกดปุ่มดูนะ</p>
+
+        <label>ชื่อ Breaker:</label>
+        <input type="text" id="breakerInput" value="MAIN-FRONTEND-01">
+
+        <label>ยี่ห้อ Relay (Manufacturer):</label>
+        <input type="text" id="brandInput" value="ABB">
+
+        <button onclick="sendDataToBackend()">💾 บันทึกข้อมูลไปยัง API</button>
+
+        <p id="statusMessage" style="color: green; font-weight: bold;"></p>
+    </div>
+
+    <script>
+        // นี่คือโค้ด JavaScript ที่เพื่อนมึงจะเขียนเพื่อคุยกับ API มึง
+        function sendDataToBackend() {
+            // 1. ดึงค่าจากช่องที่พิมพ์
+            const newBreaker = document.getElementById('breakerInput').value;
+            const newBrand = document.getElementById('brandInput').value;
+
+            // 2. แพ็คใส่กล่อง JSON
+            const data = {
+                "Breaker": newBreaker,
+                "Relay_Manufacturer": newBrand
+            };
+
+            // 3. ยิงไปที่ API ของมึง (สังเกตว่ามันยิงไปที่ไอดี /1)
+            fetch('https://gsp-api.onrender.com/api/relays/1', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                // โชว์ข้อความตอบกลับจาก Backend ของมึง
+                document.getElementById('statusMessage').innerText = "✅ " + result.message;
+            })
+            .catch(error => {
+                document.getElementById('statusMessage').innerText = "❌ พังว่ะ: " + error;
+            });
+        }
+    </script>
+
+</body>
+</html>

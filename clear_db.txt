@@ -4,14 +4,12 @@ import os
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "relay_data.db")
 
-# เชื่อมต่อฐานข้อมูล
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 
-# 1. ลบตารางเก่าทิ้งเพื่อความสะอาด
 cursor.execute("DROP TABLE IF EXISTS relays")
 
-# 2. สร้างตารางใหม่ โดยเอา Plant ขึ้นเป็นคอลัมน์แรกสุดใน .db เลย
+# สร้างตารางใหม่ กำหนดชนิดข้อมูลให้ชัดเจน (REAL = ค่าตัวเลขจุดทศนิยม)
 cursor.execute("""
 CREATE TABLE relays (
     Plant TEXT,
@@ -22,40 +20,38 @@ CREATE TABLE relays (
     ZCT_Ratio TEXT,
     ZCT_Class TEXT,
     ZCT_Burden_VA TEXT,
-    Relay_ID TEXT,
+    Relay_ID TEXT UNIQUE, 
     Relay_Manufacturer TEXT,
     Relay_Model TEXT,
     Phase_Curve TEXT,
-    Phase_Pickup TEXT,
-    Phase_Prim_Amps TEXT,
-    Phase_Time_Dial TEXT,
-    Phase_Inst_Pickup TEXT,
-    Phase_Inst_Prim_Amps TEXT,
-    Phase_Inst_Delay_s TEXT,
+    Phase_Pickup REAL,
+    Phase_Prim_Amps REAL,
+    Phase_Time_Dial REAL,
+    Phase_Inst_Pickup REAL,
+    Phase_Inst_Prim_Amps REAL,
+    Phase_Inst_Delay_s REAL,
     Ground_Curve TEXT,
-    Ground_Pickup TEXT,
-    Ground_Prim_Amps TEXT,
-    Ground_Time_Dial TEXT,
-    Ground_Inst_Pickup TEXT,
-    Ground_Inst_Prim_Amps TEXT,
-    Ground_Inst_Delay_s TEXT,
-    OLR_Trip TEXT,
-    OLR_Prim_Amps TEXT,
-    OLR_Time_Constant TEXT,
+    Ground_Pickup REAL,
+    Ground_Prim_Amps REAL,
+    Ground_Time_Dial REAL,
+    Ground_Inst_Pickup REAL,
+    Ground_Inst_Prim_Amps REAL,
+    Ground_Inst_Delay_s REAL,
+    OLR_Trip REAL,
+    OLR_Prim_Amps REAL,
+    OLR_Time_Constant REAL,
     Remark TEXT
 )
 """)
 
-# 3. เตรียมข้อมูล GSP1 ที่ข้างในเป็น "-" ทั้งหมด (ยกเว้น Plant)
-# มีทั้งหมด 29 คอลัมน์ (Plant เป็น 'GSP1' ส่วนอีก 28 คอลัมน์เป็น '-')
-blank_row = ('GSP1',) + ('-',) * 28
-
-# 4. วนลูปยัดข้อมูลเข้าไป 28 ตัว (28 แถว)
-for i in range(28):
+# ยัดข้อมูล 28 แถว โดยใส่แค่ Plant กับ Relay_ID นอกนั้นปล่อยเป็น NULL อัตโนมัติ
+for i in range(1, 29):
+    # สร้าง Relay_ID แบบคงที่ เช่น GSP1-R01, GSP1-R02 ไปจนถึง R28
+    relay_id = f"GSP1-R{i:02d}"
     cursor.execute("""
-    INSERT INTO relays VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, blank_row)
+    INSERT INTO relays (Plant, Relay_ID) VALUES (?, ?)
+    """, ('GSP1', relay_id))
 
 conn.commit()
-print("🎉 จัดการฐานข้อมูลเรียบร้อย! ตอนนี้ใน .db มีแค่ GSP1 จำนวน 28 ตัว และข้อมูลข้างในเป็น '-' ทั้งหมดแล้ว")
+print("อัปเกรดฐานข้อมูลเรียบร้อย! คอลัมน์ตัวเลขเป็น REAL และใช้ NULL แทนขีดแล้ว")
 conn.close()

@@ -1,13 +1,14 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Optional
 import sqlite3
 import pandas as pd
 import os
 import uvicorn
 
-app = FastAPI(title="GSP1 API - Full Version (Filter & Edit)")
+app = FastAPI(title="GSP1 API - Pro Version")
 
-# เปิด CORS ให้เพื่อนฝั่ง Frontend เข้าถึงได้ทุกฟังก์ชัน
 app.add_middleware(
     CORSMiddleware, 
     allow_origins=["*"], 
@@ -23,63 +24,93 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+# --- Pydantic Model: ยามเฝ้าประตู (Whitelist & Type Validation) ---
+class RelayUpdateSchema(BaseModel):
+    Breaker: Optional[str] = None
+    CT_Ratio: Optional[str] = None
+    CT_Class: Optional[str] = None
+    CT_Burden_VA: Optional[str] = None
+    ZCT_Ratio: Optional[str] = None
+    ZCT_Class: Optional[str] = None
+    ZCT_Burden_VA: Optional[str] = None
+    Relay_Manufacturer: Optional[str] = None
+    Relay_Model: Optional[str] = None
+    Phase_Curve: Optional[str] = None
+    Phase_Pickup: Optional[float] = None
+    Phase_Prim_Amps: Optional[float] = None
+    Phase_Time_Dial: Optional[float] = None
+    Phase_Inst_Pickup: Optional[float] = None
+    Phase_Inst_Prim_Amps: Optional[float] = None
+    Phase_Inst_Delay_s: Optional[float] = None
+    Ground_Curve: Optional[str] = None
+    Ground_Pickup: Optional[float] = None
+    Ground_Prim_Amps: Optional[float] = None
+    Ground_Time_Dial: Optional[float] = None
+    Ground_Inst_Pickup: Optional[float] = None
+    Ground_Inst_Prim_Amps: Optional[float] = None
+    Ground_Inst_Delay_s: Optional[float] = None
+    OLR_Trip: Optional[float] = None
+    OLR_Prim_Amps: Optional[float] = None
+    OLR_Time_Constant: Optional[float] = None
+    Remark: Optional[str] = None
+
 @app.get("/")
 def home():
-    return {"message": "GSP1 API with Filter & Edit features is running!", "status": "success"}
+    return {"message": "GSP1 API is running!", "status": "success"}
 
-
-# ประตูที่ 1: [GET] ดูข้อมูลทั้งหมดแบบมี ID
 @app.get("/api/relays")
 def get_all_relays():
     conn = get_db_connection()
-    df = pd.read_sql_query("SELECT rowid as id, * FROM relays", conn)
+    df = pd.read_sql_query("SELECT * FROM relays", conn)
     conn.close()
+    
+    # แปลง NaN ของ Pandas กลับเป็น None (NULL ในฝั่ง Frontend)
+    df = df.where(pd.notnull(df), None)
     return {"status": "success", "total": len(df), "data": df.to_dict(orient="records")}
 
-
-# ประตูที่ 2: [GET] ดูข้อมูลแยกตาม Plant (ลิงก์ /api/relays/GSP1 จะกลับมาเข้าได้ปกติแล้ว!)
 @app.get("/api/relays/{plant}")
 def get_relays_by_plant(plant: str):
     conn = get_db_connection()
-    # ดึงข้อมูลแยกโรง และดึงเลข rowid มาทำเป็น id ให้ด้วย เผื่อเพื่อนดึงแยกโรงไปแล้วอยากกดแก้
-    query = "SELECT rowid as id, * FROM relays WHERE Plant = ?"
+    query = "SELECT * FROM relays WHERE Plant = ?"
     df = pd.read_sql_query(query, conn, params=(plant.upper(),))
     conn.close()
     
     if df.empty:
         return {"status": "error", "message": f"ไม่พบข้อมูลของ {plant}"}
         
+    df = df.where(pd.notnull(df), None)
     return {"status": "success", "total": len(df), "data": df.to_dict(orient="records")}
 
-
-# ประตูที่ 3: [PUT] สำหรับรับข้อมูลที่เพื่อนพิมพ์แก้ไขจากหน้าเว็บมาเซฟลง .db
+# เปลี่ยนไปใช้ {relay_id} เป็น String (เช่น GSP1-R01) แทน rowid แล้ว!
 @app.put("/api/relays/{relay_id}")
-def update_relay(relay_id: int, updated_data: dict):
+def update_relay(relay_id: str, updated_data: RelayUpdateSchema):
+    # ใช้ exclude_unset=True ตามที่พี่เขาสะกิดมาเป๊ะๆ
+    # (ถ้ารันแล้วพังเพราะ FastAPI เครื่องมึงเป็นเวอร์ชันเก่า ให้เปลี่ยน .model_dump เป็น .dict)
+    update_dict = updated_data.model_dump(exclude_unset=True)
+    
+    if not update_dict:
+        return {"status": "success", "message": "ไม่มีข้อมูลอัปเดต"}
+
     conn = get_db_connection()
     cursor = conn.cursor()
     
-    # เช็คก่อนว่ามีไอดีนี้ไหม
-    cursor.execute("SELECT rowid FROM relays WHERE rowid = ?", (relay_id,))
+    # เช็คก่อนว่ามีรหัส Relay_ID นี้จริงๆ ใช่ไหม
+    cursor.execute("SELECT Relay_ID FROM relays WHERE Relay_ID = ?", (relay_id,))
     if not cursor.fetchone():
         conn.close()
-        raise HTTPException(status_code=404, detail=f"ไม่พบข้อมูล Relay ไอดี {relay_id}")
+        raise HTTPException(status_code=404, detail=f"ไม่พบข้อมูล Relay ID: {relay_id}")
     
-    if not updated_data:
-        conn.close()
-        return {"status": "success", "message": "ไม่มีข้อมูลอัปเดต"}
-
-    # สร้างคำสั่ง SQL UPDATE อัตโนมัติตามข้อมูลที่ส่งมา
-    fields = list(updated_data.keys())
-    values = list(updated_data.values())
+    fields = list(update_dict.keys())
+    values = list(update_dict.values())
     
     set_clause = ", ".join([f"{field} = ?" for field in fields])
-    query = f"UPDATE relays SET {set_clause} WHERE rowid = ?"
+    query = f"UPDATE relays SET {set_clause} WHERE Relay_ID = ?"
     
     try:
         cursor.execute(query, values + [relay_id])
         conn.commit()
         conn.close()
-        return {"status": "success", "message": f"แก้ไขข้อมูล Relay ไอดี {relay_id} สำเร็จ!"}
+        return {"status": "success", "message": f"แก้ไขข้อมูล Relay ID: {relay_id} สำเร็จ!"}
     except Exception as e:
         conn.close()
         raise HTTPException(status_code=400, detail=f"เกิดข้อผิดพลาด: {str(e)}")
