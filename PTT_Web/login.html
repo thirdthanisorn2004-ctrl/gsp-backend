@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>PTT Asset Protection Database - Sign In</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+                "inverse-surface": "#313030",
+                "on-surface-variant": "#424751",
+                "surface": "#fcf9f8",
+                "error": "#ba1a1a",
+                "surface-container-lowest": "#ffffff",
+                "on-surface": "#1c1b1b",
+                "outline": "#727783",
+                "background": "#fcf9f8",
+                "secondary": "#006d33",
+                "outline-variant": "#c2c6d3",
+                "on-primary": "#ffffff",
+                "primary": "#003d7c",
+                "error-container": "#ffdad6"
+            },
+            fontFamily: {
+                "body-md": ["Plus Jakarta Sans"],
+                "headline-xl": ["Space Grotesk"],
+                "label-caps": ["JetBrains Mono"],
+                "body-lg": ["Plus Jakarta Sans"],
+                "headline-md": ["Space Grotesk"],
+                "headline-lg-mobile": ["Space Grotesk"],
+                "data-mono": ["JetBrains Mono"],
+                "headline-lg": ["Space Grotesk"]
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            background-color: #f0f4fa;
+        }
+
+        /* Animated grid background */
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(0, 61, 124, 0.06) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0, 61, 124, 0.06) 1px, transparent 1px);
+            animation: grid-drift 20s linear infinite;
+        }
+        @keyframes grid-drift {
+            0%   { background-position: 0 0; }
+            100% { background-position: 40px 40px; }
+        }
+
+        /* Ambient glows */
+        .glow-orb-1 {
+            position: fixed; width: 500px; height: 500px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,61,124,0.12) 0%, transparent 70%);
+            top: -100px; left: -100px; pointer-events: none;
+            animation: float1 8s ease-in-out infinite;
+        }
+        .glow-orb-2 {
+            position: fixed; width: 400px; height: 400px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(0,109,51,0.08) 0%, transparent 70%);
+            bottom: -80px; right: -80px; pointer-events: none;
+            animation: float2 10s ease-in-out infinite;
+        }
+        @keyframes float1 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,20px)} }
+        @keyframes float2 { 0%,100%{transform:translate(0,0)} 50%{transform:translate(-20px,-30px)} }
+
+        /* Card */
+        .auth-card {
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0,61,124,0.12);
+            box-shadow: 0 4px 6px -1px rgba(0,61,124,0.06),
+                        0 20px 60px -10px rgba(0,61,124,0.12),
+                        inset 0 1px 0 rgba(255,255,255,0.9);
+        }
+
+        /* Top accent bar */
+        .card-accent {
+            height: 3px;
+            background: linear-gradient(90deg, #003d7c 0%, #0054a6 50%, #006d33 100%);
+            border-radius: 999px 999px 0 0;
+        }
+
+        /* Input field */
+        .input-field {
+            width: 100%;
+            background: #f8faff;
+            border: 1.5px solid #dde3ef;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #1c1b1b;
+            padding: 10px 12px;
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+            outline: none;
+        }
+        .input-field:focus {
+            background: #fff;
+            border-color: #003d7c;
+            box-shadow: 0 0 0 3px rgba(0,61,124,0.1);
+        }
+        .input-field::placeholder { color: #a0a8b8; }
+
+        /* Select */
+        .select-field {
+            width: 100%;
+            background: #f8faff;
+            border: 1.5px solid #dde3ef;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            color: #1c1b1b;
+            padding: 10px 36px 10px 12px;
+            appearance: none;
+            cursor: pointer;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .select-field:focus {
+            border-color: #003d7c;
+            box-shadow: 0 0 0 3px rgba(0,61,124,0.1);
+        }
+
+        /* Tab switcher */
+        .tab-btn {
+            flex: 1;
+            padding: 8px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #727783;
+            background: transparent;
+        }
+        .tab-btn.active {
+            background: #003d7c;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,61,124,0.3);
+        }
+
+        /* Submit button */
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #003d7c 0%, #0054a6 100%);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.15s, box-shadow 0.15s;
+            box-shadow: 0 4px 14px rgba(0,61,124,0.35);
+        }
+        .submit-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(0,61,124,0.45);
+        }
+        .submit-btn:active { transform: translateY(0); }
+        .submit-btn::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.15) 50%, transparent 100%);
+            transform: translateX(-100%);
+            transition: transform 0.4s;
+        }
+        .submit-btn:hover::after { transform: translateX(100%); }
+
+        /* Status banner */
+        .status-banner {
+            display: none;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin-bottom: 16px;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-banner.visible { display: flex; }
+
+        /* Security badge */
+        .security-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 3px 8px; border-radius: 4px;
+            border: 1px solid rgba(0,61,124,0.2);
+            background: rgba(0,61,124,0.05);
+            color: #003d7c;
+        }
+
+        /* Logo pulse */
+        .logo-ring {
+            animation: logo-pulse 3s ease-in-out infinite;
+        }
+        @keyframes logo-pulse {
+            0%,100% { box-shadow: 0 0 0 0 rgba(0,61,124,0.2); }
+            50%      { box-shadow: 0 0 0 8px rgba(0,61,124,0); }
+        }
+
+        /* Divider */
+        .divider {
+            display: flex; align-items: center; gap: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.1em; text-transform: uppercase;
+            color: #a0a8b8;
+            margin: 4px 0;
+        }
+        .divider::before, .divider::after {
+            content: ''; flex: 1;
+            border-top: 1px solid #e5e7f0;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen w-full flex items-center justify-center grid-bg relative overflow-auto">
+
+    <!-- Ambient orbs -->
+    <div class="glow-orb-1"></div>
+    <div class="glow-orb-2"></div>
+
+    <!-- Main container -->
+    <main class="relative z-10 w-full max-w-[420px] px-5 py-8 flex flex-col items-center">
+
+        <!-- Logo & Header -->
+        <div class="mb-7 flex flex-col items-center text-center">
+            <div class="logo-ring w-[72px] h-[72px] bg-white rounded-2xl border border-[rgba(0,61,124,0.15)] flex items-center justify-center mb-4 shadow-lg">
+                <span class="material-symbols-outlined text-primary text-[38px]" style="font-variation-settings:'FILL' 1;">security</span>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+                <span class="security-badge">
+                    <span class="material-symbols-outlined" style="font-size:12px;">lock</span>
+                    Secure Portal
+                </span>
+            </div>
+            <h1 class="font-headline-lg text-[26px] font-bold text-on-surface tracking-tight leading-tight">
+                PTT Asset Protection
+            </h1>
+            <p class="font-data-mono text-[11px] text-on-surface-variant uppercase tracking-[0.18em] mt-1 opacity-70">
+                Database Access Terminal
+            </p>
+        </div>
+
+        <!-- Auth Card -->
+        <div class="auth-card rounded-xl w-full overflow-hidden">
+
+            <!-- Accent bar -->
+            <div class="card-accent"></div>
+
+            <div class="p-7">
+
+                <!-- Tab switcher -->
+                <div class="flex gap-1 bg-[#f0f4fa] rounded-lg p-1 mb-6">
+                    <button class="tab-btn active" id="tab-signin" onclick="switchTab('signin')">Sign In</button>
+                    <button class="tab-btn" id="tab-signup" onclick="switchTab('signup')">Sign Up</button>
+                </div>
+
+                <!-- Status banner -->
+                <div class="status-banner" id="status-display">
+                    <span class="material-symbols-outlined text-[16px]" id="status-icon">info</span>
+                    <span id="status-text"></span>
+                </div>
+
+                <!-- Form -->
+                <form id="auth-form" class="space-y-4" onsubmit="handleSubmit(event)">
+
+                    <!-- Username -->
+                    <div>
+                        <label class="block font-label-caps text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5" for="username">
+                            Username
+                        </label>
+                        <div class="flex items-center gap-2 bg-[#f8faff] border-[1.5px] border-[#dde3ef] rounded-lg px-3 transition-colors focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(0,61,124,0.1)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#727783" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><circle cx="12" cy="8" r="5"/><path d="M3 21v-1a9 9 0 0 1 18 0v1"/></svg>
+                            <input class="input-field" id="username" placeholder="Enter your username" type="text" required autocomplete="username" style="border:none;background:transparent;padding-left:0;padding-right:0;box-shadow:none;">
+                        </div>
+                    </div>
+
+                    <!-- Password -->
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="block font-label-caps text-[11px] font-bold text-on-surface-variant uppercase tracking-wider" for="password">
+                                Password
+                            </label>
+                        </div>
+                        <div class="flex items-center gap-2 bg-[#f8faff] border-[1.5px] border-[#dde3ef] rounded-lg px-3 transition-colors focus-within:border-primary focus-within:shadow-[0_0_0_3px_rgba(0,61,124,0.1)]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#727783" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                            <input class="input-field" id="password" placeholder="••••••••" type="password" required autocomplete="current-password" style="border:none;background:transparent;padding-left:0;padding-right:0;box-shadow:none;">
+                            <button type="button" onclick="togglePassword()" class="text-outline hover:text-on-surface-variant transition-colors" style="flex-shrink:0;background:none;border:none;cursor:pointer;padding:0;display:flex;align-items:center;">
+                                <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="divider">Authorization Level</div>
+
+                    <!-- Role selector -->
+                    <div>
+                        <label class="block font-label-caps text-[11px] font-bold text-on-surface-variant uppercase tracking-wider mb-1.5">
+                            Access Role
+                        </label>
+                        <div class="relative">
+                            <select id="role-select" class="select-field">
+                                <option value="user">Standard User</option>
+                                <option value="admin">Administrator</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-on-surface-variant">
+                                <span class="material-symbols-outlined text-[18px]">expand_more</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit -->
+                    <div class="pt-2">
+                        <button class="submit-btn" type="submit" id="submit-btn">
+                            <span id="submit-label">Sign In</span>
+                        </button>
+                    </div>
+
+                </form>
+
+            </div>
+
+            <!-- Footer inside card -->
+            <div class="px-7 pb-5 text-center">
+                <p class="font-data-mono text-[11px] text-on-surface-variant/60">
+                    <span id="footer-hint">Don't have an account?</span>
+                    <button onclick="switchTab(currentTab === 'signin' ? 'signup' : 'signin')"
+                        class="text-primary font-bold hover:underline ml-1 bg-transparent border-none cursor-pointer font-data-mono text-[11px]"
+                        id="footer-link">
+                        Sign Up
+                    </button>
+                </p>
+            </div>
+        </div>
+
+        <!-- Bottom status bar -->
+        <div class="mt-6 flex items-center gap-4 font-data-mono text-[10px] text-on-surface-variant/40 uppercase tracking-widest">
+            <span class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                System Online
+            </span>
+            <span>NODE: BKK-01</span>
+            <span>AES-256</span>
+        </div>
+
+    </main>
+
+<script>
+    const API_BASE_URL = "http://127.0.0.1:8000/api";
+    let currentTab = "signin";
+
+    function switchTab(tab) {
+        currentTab = tab;
+        const isSignIn = tab === "signin";
+
+        document.getElementById("tab-signin").className = "tab-btn" + (isSignIn ? " active" : "");
+        document.getElementById("tab-signup").className = "tab-btn" + (!isSignIn ? " active" : "");
+        document.getElementById("submit-label").textContent = isSignIn ? "Sign In" : "Create Account";
+        document.getElementById("footer-hint").textContent = isSignIn ? "Don't have an account?" : "Already have an account?";
+        document.getElementById("footer-link").textContent = isSignIn ? "Sign Up" : "Sign In";
+
+        hideStatus();
+    }
+
+    function showStatus(msg, type) {
+        const banner = document.getElementById("status-display");
+        const icon = document.getElementById("status-icon");
+        const text = document.getElementById("status-text");
+
+        const styles = {
+            success: { cls: "border border-green-200 text-green-800 bg-green-50", ic: "check_circle" },
+            error:   { cls: "border border-red-200 text-[#ba1a1a] bg-[#ffdad6]", ic: "error" },
+            info:    { cls: "border border-blue-200 text-blue-800 bg-blue-50", ic: "info" },
+            warn:    { cls: "border border-orange-200 text-orange-800 bg-orange-50", ic: "warning" },
+        };
+
+        const s = styles[type] || styles.info;
+        banner.className = `status-banner visible ${s.cls}`;
+        icon.textContent = s.ic;
+        text.textContent = msg;
+    }
+
+    function hideStatus() {
+        document.getElementById("status-display").className = "status-banner";
+    }
+
+    function togglePassword() {
+        const pwd = document.getElementById("password");
+        const icon = document.getElementById("eye-icon");
+        if (pwd.type === "password") {
+            pwd.type = "text";
+            icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+        } else {
+            pwd.type = "password";
+            icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+        }
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        const username = document.getElementById("username").value.trim();
+        const password = document.getElementById("password").value;
+        const role     = document.getElementById("role-select").value;
+        const btn      = document.getElementById("submit-btn");
+
+        btn.disabled = true;
+
+        if (currentTab === "signin") {
+            showStatus("Authenticating...", "info");
+            try {
+                const res = await axios.post(`${API_BASE_URL}/login`, { username, password, role });
+                if (res.data.access_token) {
+                    showStatus("Access granted. Redirecting...", "success");
+                    localStorage.setItem("token", res.data.access_token);
+                    localStorage.setItem("user_role", res.data.role || role);
+                    localStorage.setItem("operator_id", username);
+                    setTimeout(() => { window.location.href = "plant-selection.html"; }, 1000);
+                }
+            } catch (err) {
+                const msg = err.response?.data?.detail || "Invalid credentials. Please try again.";
+                showStatus(msg, "error");
+                btn.disabled = false;
+            }
+        } else {
+            showStatus("Creating your account...", "info");
+            try {
+                const res = await axios.post(`${API_BASE_URL}/register`, { username, password, role });
+                if (res.data.status === "success" || res.status === 200) {
+                    showStatus("Account created! You can now sign in.", "success");
+                    setTimeout(() => switchTab("signin"), 1500);
+                }
+            } catch (err) {
+                const msg = err.response?.data?.detail || "Registration failed. Please try again.";
+                showStatus(msg, "error");
+            } finally {
+                btn.disabled = false;
+            }
+        }
+    }
+</script>
+</body>
+</html>

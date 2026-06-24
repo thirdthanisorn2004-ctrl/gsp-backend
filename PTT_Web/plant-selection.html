@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>PTT Mission Control - Plant Selection</title>
+    
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    
+    <script id="tailwind-config">
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+                "primary": "#0054a6",
+                "primary-dark": "#003d7c",
+                "surface": "#ffffff",
+                "background": "#f8f9fa",
+                "outline-variant": "#e0e0e0",
+                "ready": "#e8f5e9",
+                "ready-text": "#2e7d32",
+                "standby": "#f5f5f5",
+                "standby-text": "#757575",
+            },
+            fontFamily: {
+                "sans": ["Plus Jakarta Sans"],
+                "heading": ["Space Grotesk"],
+                "mono": ["JetBrains Mono"]
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+        body { background-color: #fcf9f8; }
+        .grid-bg {
+            background-size: 20px 20px;
+            background-image: linear-gradient(to right, rgba(0, 84, 166, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0, 84, 166, 0.05) 1px, transparent 1px);
+        }
+        .plant-card { transition: all 0.2s ease-in-out; }
+        .plant-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-color: #0054a6; }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex flex-col grid-bg font-sans">
+
+    <nav class="bg-white border-b border-outline-variant px-6 py-3 flex justify-between items-center shadow-sm">
+        <div class="flex items-center space-x-8">
+            <h1 class="font-heading font-bold text-primary text-xl tracking-tight">PTT MISSION CONTROL</h1>
+            <div class="hidden md:flex space-x-6 font-mono text-xs uppercase font-bold text-gray-500 tracking-wider">
+                <a href="#" class="text-primary border-b-2 border-primary pb-1">Plant Selection</a>
+                <a href="#" class="hover:text-primary transition-colors">SLD View</a>
+                <a href="#" class="hover:text-primary transition-colors">Diagnostics</a>
+                <a href="#" class="hover:text-primary transition-colors">Logs</a>
+            </div>
+        </div>
+        <div class="flex items-center space-x-4">
+            <span class="material-symbols-outlined text-gray-400 hover:text-gray-600 cursor-pointer">notifications</span>
+            <span class="material-symbols-outlined text-gray-400 hover:text-gray-600 cursor-pointer">settings</span>
+            <span id="role-badge" class="font-mono text-xs border border-gray-300 px-2 py-1 rounded text-gray-600 uppercase font-bold">ADMIN</span>
+            <button id="logout-btn" class="bg-primary hover:bg-primary-dark text-white font-mono text-xs uppercase px-4 py-1.5 rounded transition-colors font-bold">Logout</button>
+        </div>
+    </nav>
+
+    <main class="flex-1 p-8 max-w-6xl mx-auto w-full">
+        
+        <div class="flex justify-between items-end mb-8 border-b border-outline-variant pb-4">
+            <div>
+                <h2 class="font-heading text-2xl font-bold text-gray-800 mb-1">PLANT SELECTION OVERVIEW</h2>
+                <p class="font-mono text-xs text-gray-500 uppercase tracking-widest">Select operational sector for diagnostics</p>
+            </div>
+            <div class="flex items-center space-x-2 font-mono text-xs font-bold text-green-600">
+                <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span>SYSTEM LIVE</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+            
+            <div class="space-y-4">
+                <h3 class="font-mono font-bold text-primary flex items-center space-x-2 mb-4">
+                    <span class="material-symbols-outlined text-lg">bolt</span>
+                    <span>22 KV BUS NETWORK</span>
+                </h3>
+
+                <div onclick="goToDashboard('GSP1')" class="plant-card bg-white border border-blue-200 rounded p-4 cursor-pointer flex justify-between items-center shadow-sm relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-blue-50 p-2 rounded text-primary"><span class="material-symbols-outlined">factory</span></div>
+                        <div>
+                            <h4 class="font-heading font-bold text-gray-800">GSP1</h4>
+                            <p class="font-mono text-[10px] text-gray-500">ID: PT-22K-001</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-mono text-[10px] bg-ready text-ready-text px-2 py-1 rounded font-bold border border-green-200">READY</span>
+                        <span class="material-symbols-outlined text-gray-400">arrow_forward</span>
+                    </div>
+                </div>
+
+                <div onclick="goToDashboard('GSP2')" class="plant-card bg-white border border-outline-variant rounded p-4 cursor-pointer flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gray-50 p-2 rounded text-gray-400"><span class="material-symbols-outlined">domain</span></div>
+                        <div>
+                            <h4 class="font-heading font-bold text-gray-800">GSP2</h4>
+                            <p class="font-mono text-[10px] text-gray-500">ID: PT-22K-002</p>
+                        </div>
+                    </div>
+                    <span class="font-mono text-[10px] bg-standby text-standby-text px-2 py-1 rounded font-bold border border-gray-200">STANDBY</span>
+                </div>
+
+                <div onclick="goToDashboard('GSP3')" class="plant-card bg-white border border-outline-variant rounded p-4 cursor-pointer flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gray-50 p-2 rounded text-gray-400"><span class="material-symbols-outlined">account_tree</span></div>
+                        <div>
+                            <h4 class="font-heading font-bold text-gray-800">GSP3</h4>
+                            <p class="font-mono text-[10px] text-gray-500">MULTI-NODE</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-gray-400">expand_more</span>
+                </div>
+                
+                <div onclick="goToDashboard('GSP5')" class="plant-card bg-white border border-outline-variant rounded p-4 cursor-pointer flex justify-between items-center">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gray-50 p-2 rounded text-gray-400"><span class="material-symbols-outlined">domain</span></div>
+                        <div>
+                            <h4 class="font-heading font-bold text-gray-800">GSP5</h4>
+                            <p class="font-mono text-[10px] text-gray-500">ID: PT-22K-005</p>
+                        </div>
+                    </div>
+                    <span class="font-mono text-[10px] bg-standby text-standby-text px-2 py-1 rounded font-bold border border-gray-200">STANDBY</span>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <h3 class="font-mono font-bold text-primary flex items-center space-x-2 mb-4">
+                    <span class="material-symbols-outlined text-lg">electrical_services</span>
+                    <span>115 KV BUS NETWORK</span>
+                </h3>
+
+                <div class="plant-card bg-white border border-outline-variant rounded p-4 cursor-pointer flex justify-between items-center opacity-70">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gray-50 p-2 rounded text-gray-400"><span class="material-symbols-outlined">power</span></div>
+                        <div>
+                            <h4 class="font-heading font-bold text-gray-800">ESP</h4>
+                            <p class="font-mono text-[10px] text-gray-500">ID: PT-115K-ESP</p>
+                        </div>
+                    </div>
+                    <span class="font-mono text-[10px] bg-standby text-standby-text px-2 py-1 rounded font-bold border border-gray-200">STANDBY</span>
+                </div>
+
+                <div onclick="goToDashboard('GSP6')" class="plant-card bg-white border border-outline-variant rounded p-4 cursor-pointer flex justify-between items-center relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-green-500"></div>
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-green-50 p-2 rounded text-green-600"><span class="material-symbols-outlined">factory</span></div>
+                        <div>
+                            <h4 class="font-heading font-bold text-gray-800">GSP6</h4>
+                            <p class="font-mono text-[10px] text-gray-500">ID: PT-115K-006</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-green-500">check_circle</span>
+                </div>
+
+                <div class="plant-card bg-white border border-outline-variant rounded p-4 cursor-pointer flex justify-between items-center opacity-70">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-gray-50 p-2 rounded text-gray-400"><span class="material-symbols-outlined">water_drop</span></div>
+                        <div>
+                            <h4 class="font-heading font-bold text-gray-800">CWWTP</h4>
+                            <p class="font-mono text-[10px] text-gray-500">WATER TREATMENT</p>
+                        </div>
+                    </div>
+                    <span class="font-mono text-[10px] bg-standby text-standby-text px-2 py-1 rounded font-bold border border-gray-200">STANDBY</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <footer class="mt-auto px-6 py-2 border-t border-outline-variant flex justify-between items-center bg-white font-mono text-[9px] text-gray-400 uppercase tracking-widest">
+        <span>© 2026 PTT INDUSTRIAL SYSTEMS | CORE-DB V4.8.2</span>
+        <div class="flex space-x-4">
+            <span>SYSTEM: OPTIMAL</span>
+            <span>LATENCY: 12MS</span>
+            <span>NODE: BKK-04</span>
+        </div>
+    </footer>
+
+    <script>
+        // 1. เช็คความปลอดภัย: ถ้าไม่มีตั๋วให้เด้งกลับไปหน้า Login
+        const token = localStorage.getItem("token");
+        if (!token) {
+            window.location.href = "login.html";
+        }
+
+        // แสดง Role ของ User
+        const userRole = localStorage.getItem("user_role");
+        if (userRole) {
+            document.getElementById("role-badge").innerText = userRole;
+        }
+
+        // 2. ฟังก์ชันพากระโดดไปหน้า Dashboard เมื่อกดเลือกโรงแยกก๊าซ
+        function goToDashboard(plantName) {
+            localStorage.setItem("selected_plant", plantName);
+            window.location.href = "dashboard.html";
+        }
+
+        // 3. ระบบปุ่ม Logout
+        document.getElementById("logout-btn").addEventListener("click", () => {
+            localStorage.clear();
+            window.location.href = "login.html";
+        });
+    </script>
+</body>
+</html>

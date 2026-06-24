@@ -2,5 +2,6 @@ fastapi
 uvicorn
 libsql-client
 pyjwt
-passlib[bcrypt]
+passlib
+bcrypt==3.2.2
 pydantic

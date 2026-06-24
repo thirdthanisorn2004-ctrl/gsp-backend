@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>PTT Asset Protection - Plant Selection</title>
+
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+
+    <script id="tailwind-config">
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+                "primary":           "#003d7c",
+                "primary-mid":       "#0054a6",
+                "secondary":         "#006d33",
+                "on-surface":        "#1c1b1b",
+                "on-surface-variant":"#424751",
+                "outline":           "#727783",
+                "outline-variant":   "#c2c6d3",
+                "surface":           "#ffffff",
+                "background":        "#f0f4fa",
+                "error":             "#ba1a1a",
+            },
+            fontFamily: {
+                "sans":    ["Plus Jakarta Sans"],
+                "heading": ["Space Grotesk"],
+                "mono":    ["JetBrains Mono"]
+            }
+          }
+        }
+      }
+    </script>
+
+    <style>
+        * { box-sizing: border-box; }
+
+        body { background-color: #f0f4fa; }
+
+        .grid-bg {
+            background-size: 40px 40px;
+            background-image:
+                linear-gradient(to right, rgba(0,61,124,0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(0,61,124,0.05) 1px, transparent 1px);
+        }
+
+        /* Top nav */
+        .top-nav {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,61,124,0.1);
+            box-shadow: 0 1px 12px rgba(0,61,124,0.06);
+        }
+
+        /* Summary cards */
+        .stat-card {
+            background: rgba(255,255,255,0.9);
+            border: 1px solid rgba(0,61,124,0.1);
+            border-radius: 10px;
+            padding: 14px 18px;
+            box-shadow: 0 2px 8px rgba(0,61,124,0.06);
+        }
+
+        /* Plant card */
+        .plant-card {
+            background: rgba(255,255,255,0.92);
+            border: 1.5px solid rgba(0,61,124,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,61,124,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .plant-card:hover {
+            transform: translateY(-3px);
+            border-color: #003d7c;
+            box-shadow: 0 8px 24px rgba(0,61,124,0.14);
+        }
+        .plant-card.ready { border-left: 4px solid #003d7c; }
+        .plant-card.active { border-left: 4px solid #006d33; }
+        .plant-card.standby { border-left: 4px solid #c2c6d3; opacity: 0.85; }
+        .plant-card.alert { border-left: 4px solid #ba1a1a; }
+
+        /* Status pill */
+        .pill {
+            display: inline-flex; align-items: center; gap: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px; font-weight: 700;
+            letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 3px 8px; border-radius: 4px;
+        }
+        .pill-ready   { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+        .pill-active  { background: #e3f2fd; color: #003d7c; border: 1px solid #90caf9; }
+        .pill-standby { background: #f5f5f5; color: #757575; border: 1px solid #e0e0e0; }
+        .pill-alert   { background: #ffdad6; color: #ba1a1a; border: 1px solid #ffb4ab; }
+
+        /* Section header */
+        .section-header {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase;
+            color: #003d7c;
+            display: flex; align-items: center; gap-8px;
+            padding-bottom: 8px;
+            border-bottom: 1.5px solid rgba(0,61,124,0.15);
+            margin-bottom: 12px;
+        }
+
+        /* Search input */
+        .search-input {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: #fff;
+            border: 1.5px solid rgba(0,61,124,0.15);
+            border-radius: 8px;
+            padding: 8px 12px 8px 36px;
+            outline: none;
+            width: 220px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            color: #1c1b1b;
+        }
+        .search-input:focus {
+            border-color: #003d7c;
+            box-shadow: 0 0 0 3px rgba(0,61,124,0.1);
+        }
+        .search-input::placeholder { color: #a0a8b8; }
+
+        /* Footer */
+        .bottom-bar {
+            background: rgba(255,255,255,0.9);
+            border-top: 1px solid rgba(0,61,124,0.08);
+        }
+
+        /* Pulse dot */
+        @keyframes pulse-dot {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50%      { opacity: 0.6; transform: scale(1.3); }
+        }
+        .pulse-dot { animation: pulse-dot 2s ease-in-out infinite; }
+
+        /* Nav link active */
+        .nav-link-active {
+            color: #003d7c;
+            border-bottom: 2px solid #003d7c;
+            padding-bottom: 2px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col grid-bg font-sans text-on-surface">
+
+<!-- ===== TOP NAV ===== -->
+<nav class="top-nav px-6 py-3 flex justify-between items-center sticky top-0 z-20">
+    <div class="flex items-center gap-8">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary text-[22px]" style="font-variation-settings:'FILL' 1;">security</span>
+            <span class="font-heading font-bold text-primary text-[17px] tracking-tight">PTT Asset Protection</span>
+        </div>
+        <div class="hidden md:flex gap-6 font-mono text-[11px] uppercase font-bold text-outline tracking-wider">
+            <a href="#" class="nav-link-active">Plant Selection</a>
+            <a href="#" class="hover:text-primary transition-colors">SLD View</a>
+            <a href="#" class="hover:text-primary transition-colors">Diagnostics</a>
+            <a href="#" class="hover:text-primary transition-colors">Logs</a>
+        </div>
+    </div>
+    <div class="flex items-center gap-3">
+        <button class="relative text-outline hover:text-on-surface transition-colors" title="Notifications">
+            <span class="material-symbols-outlined text-[20px]">notifications</span>
+            <span class="absolute -top-1 -right-1 w-2 h-2 bg-error rounded-full"></span>
+        </button>
+        <button class="text-outline hover:text-on-surface transition-colors" title="Settings">
+            <span class="material-symbols-outlined text-[20px]">settings</span>
+        </button>
+        <div class="w-px h-5 bg-outline-variant mx-1"></div>
+        <div class="flex items-center gap-2">
+            <div class="w-7 h-7 rounded-full bg-primary flex items-center justify-center">
+                <span class="font-mono text-[10px] font-bold text-white" id="avatar-letter">A</span>
+            </div>
+            <div class="hidden sm:block">
+                <div class="font-mono text-[10px] font-bold text-on-surface" id="username-display">OPERATOR</div>
+                <div class="font-mono text-[9px] text-outline uppercase" id="role-badge">ADMIN</div>
+            </div>
+        </div>
+        <button id="logout-btn" class="font-mono text-[11px] font-bold uppercase px-3 py-1.5 rounded border border-primary text-primary hover:bg-primary hover:text-white transition-all">
+            Logout
+        </button>
+    </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main class="flex-1 max-w-6xl mx-auto w-full px-6 py-8">
+
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+        <div>
+            <p class="font-mono text-[10px] text-outline uppercase tracking-[0.18em] mb-1">PTT Industrial Systems</p>
+            <h1 class="font-heading text-[24px] font-bold text-on-surface tracking-tight">Plant Selection</h1>
+            <p class="font-mono text-[11px] text-outline mt-0.5">Select an operational sector to view relay data</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <!-- Search -->
+            <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-outline" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input class="search-input" type="text" placeholder="Search plant..." id="search-input">
+            </div>
+            <!-- Live indicator -->
+            <div class="flex items-center gap-1.5 font-mono text-[10px] font-bold text-secondary">
+                <span class="w-2 h-2 rounded-full bg-secondary pulse-dot inline-block"></span>
+                SYSTEM LIVE
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8">
+        <div class="stat-card">
+            <div class="font-mono text-[9px] text-outline uppercase tracking-widest mb-1">Total Plants</div>
+            <div class="font-heading text-[22px] font-bold text-primary">7</div>
+            <div class="font-mono text-[9px] text-on-surface-variant mt-0.5">Across 2 networks</div>
+        </div>
+        <div class="stat-card">
+            <div class="font-mono text-[9px] text-outline uppercase tracking-widest mb-1">Online</div>
+            <div class="font-heading text-[22px] font-bold text-secondary">2</div>
+            <div class="font-mono text-[9px] text-on-surface-variant mt-0.5">GSP1 · GSP6</div>
+        </div>
+        <div class="stat-card">
+            <div class="font-mono text-[9px] text-outline uppercase tracking-widest mb-1">Total Relays</div>
+            <div class="font-heading text-[22px] font-bold text-on-surface">48</div>
+            <div class="font-mono text-[9px] text-on-surface-variant mt-0.5">Across all plants</div>
+        </div>
+        <div class="stat-card border-error/30">
+            <div class="font-mono text-[9px] text-outline uppercase tracking-widest mb-1">Alerts</div>
+            <div class="font-heading text-[22px] font-bold text-error">3</div>
+            <div class="font-mono text-[9px] text-error mt-0.5">Require review</div>
+        </div>
+    </div>
+
+    <!-- Plant Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8" id="plant-grid">
+
+        <!-- 22 KV Section -->
+        <div>
+            <div class="section-header flex items-center gap-2 mb-4">
+                <span class="material-symbols-outlined text-[16px]">bolt</span>
+                <span>22 KV Bus Network</span>
+            </div>
+            <div class="space-y-3" id="bus-22kv">
+
+                <div onclick="goToDashboard('GSP1')" class="plant-card ready p-4 flex justify-between items-center" data-name="GSP1">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center text-primary">
+                            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">factory</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-heading font-bold text-[15px]">GSP1</h4>
+                                <span class="pill pill-ready"><span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>Ready</span>
+                            </div>
+                            <p class="font-mono text-[10px] text-outline mt-0.5">ID: PT-22K-001 · 12 Relays</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="material-symbols-outlined text-outline-variant text-[18px]">arrow_forward</span>
+                        <span class="font-mono text-[9px] text-outline">Updated 2m ago</span>
+                    </div>
+                </div>
+
+                <div onclick="goToDashboard('GSP2')" class="plant-card standby p-4 flex justify-between items-center" data-name="GSP2">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center text-outline">
+                            <span class="material-symbols-outlined text-[18px]">domain</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-heading font-bold text-[15px]">GSP2</h4>
+                                <span class="pill pill-standby">Standby</span>
+                            </div>
+                            <p class="font-mono text-[10px] text-outline mt-0.5">ID: PT-22K-002 · 8 Relays</p>
+                        </div>
+                    </div>
+                    <span class="font-mono text-[9px] text-outline">Updated 1h ago</span>
+                </div>
+
+                <div onclick="goToDashboard('GSP3')" class="plant-card alert p-4 flex justify-between items-center" data-name="GSP3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-red-50 flex items-center justify-center text-error">
+                            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">account_tree</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-heading font-bold text-[15px]">GSP3</h4>
+                                <span class="pill pill-alert"><span class="material-symbols-outlined text-[11px]">warning</span>3 Alerts</span>
+                            </div>
+                            <p class="font-mono text-[10px] text-outline mt-0.5">MULTI-NODE · 14 Relays</p>
+                        </div>
+                    </div>
+                    <span class="material-symbols-outlined text-outline-variant text-[18px]">arrow_forward</span>
+                </div>
+
+                <div onclick="goToDashboard('GSP5')" class="plant-card standby p-4 flex justify-between items-center" data-name="GSP5">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center text-outline">
+                            <span class="material-symbols-outlined text-[18px]">domain</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-heading font-bold text-[15px]">GSP5</h4>
+                                <span class="pill pill-standby">Standby</span>
+                            </div>
+                            <p class="font-mono text-[10px] text-outline mt-0.5">ID: PT-22K-005 · 6 Relays</p>
+                        </div>
+                    </div>
+                    <span class="font-mono text-[9px] text-outline">Updated 3h ago</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- 115 KV Section -->
+        <div>
+            <div class="section-header flex items-center gap-2 mb-4">
+                <span class="material-symbols-outlined text-[16px]">electrical_services</span>
+                <span>115 KV Bus Network</span>
+            </div>
+            <div class="space-y-3" id="bus-115kv">
+
+                <div class="plant-card standby p-4 flex justify-between items-center" data-name="ESP">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center text-outline">
+                            <span class="material-symbols-outlined text-[18px]">power</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-heading font-bold text-[15px]">ESP</h4>
+                                <span class="pill pill-standby">Standby</span>
+                            </div>
+                            <p class="font-mono text-[10px] text-outline mt-0.5">ID: PT-115K-ESP · 4 Relays</p>
+                        </div>
+                    </div>
+                    <span class="font-mono text-[10px] text-outline/50">No Access</span>
+                </div>
+
+                <div onclick="goToDashboard('GSP6')" class="plant-card active p-4 flex justify-between items-center" data-name="GSP6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-green-50 flex items-center justify-center text-secondary">
+                            <span class="material-symbols-outlined text-[18px]" style="font-variation-settings:'FILL' 1;">factory</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-heading font-bold text-[15px]">GSP6</h4>
+                                <span class="pill pill-active"><span class="w-1.5 h-1.5 rounded-full bg-primary inline-block"></span>Active</span>
+                            </div>
+                            <p class="font-mono text-[10px] text-outline mt-0.5">ID: PT-115K-006 · 10 Relays</p>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end gap-1">
+                        <span class="material-symbols-outlined text-outline-variant text-[18px]">arrow_forward</span>
+                        <span class="font-mono text-[9px] text-outline">Updated 5m ago</span>
+                    </div>
+                </div>
+
+                <div class="plant-card standby p-4 flex justify-between items-center" data-name="CWWTP">
+                    <div class="flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center text-outline">
+                            <span class="material-symbols-outlined text-[18px]">water_drop</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h4 class="font-heading font-bold text-[15px]">CWWTP</h4>
+                                <span class="pill pill-standby">Standby</span>
+                            </div>
+                            <p class="font-mono text-[10px] text-outline mt-0.5">WATER TREATMENT · 4 Relays</p>
+                        </div>
+                    </div>
+                    <span class="font-mono text-[10px] text-outline/50">No Access</span>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- No results -->
+    <div id="no-results" class="hidden text-center py-16 text-outline font-mono text-[12px]">
+        <span class="material-symbols-outlined text-[40px] block mb-2 opacity-30">search_off</span>
+        No plant found
+    </div>
+
+</main>
+
+<!-- ===== FOOTER ===== -->
+<footer class="bottom-bar px-6 py-2 flex justify-between items-center font-mono text-[9px] text-outline uppercase tracking-widest">
+    <span>© 2026 PTT Industrial Systems · Core-DB v4.8.2</span>
+    <div class="flex gap-4">
+        <span>System: Optimal</span>
+        <span>Latency: 12ms</span>
+        <span>Node: BKK-04</span>
+    </div>
+</footer>
+
+<script>
+    // Auth guard
+    const token = localStorage.getItem("token");
+    if (!token) window.location.href = "login.html";
+
+    // Show user info
+    const userRole = localStorage.getItem("user_role") || "user";
+    const operatorId = localStorage.getItem("operator_id") || "OPR";
+    document.getElementById("role-badge").textContent = userRole.toUpperCase();
+    document.getElementById("username-display").textContent = operatorId.toUpperCase();
+    document.getElementById("avatar-letter").textContent = operatorId.charAt(0).toUpperCase();
+
+    // Navigate to dashboard
+    function goToDashboard(plantName) {
+        localStorage.setItem("selected_plant", plantName);
+        window.location.href = "dashboard.html";
+    }
+
+    // Search filter
+    document.getElementById("search-input").addEventListener("input", function () {
+        const q = this.value.toLowerCase();
+        const cards = document.querySelectorAll(".plant-card[data-name]");
+        let visible = 0;
+        cards.forEach(card => {
+            const name = card.dataset.name.toLowerCase();
+            const show = name.includes(q);
+            card.style.display = show ? "" : "none";
+            if (show) visible++;
+        });
+        document.getElementById("no-results").classList.toggle("hidden", visible > 0);
+    });
+
+    // Logout
+    document.getElementById("logout-btn").addEventListener("click", () => {
+        localStorage.clear();
+        window.location.href = "login.html";
+    });
+</script>
+</body>
+</html>
