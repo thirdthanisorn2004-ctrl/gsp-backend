@@ -190,6 +190,24 @@ def create_relay(new_data: RelayCreateSchema, current_user: dict = Depends(verif
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"เกิดข้อผิดพลาด: {str(e)}")
 
+# --- DELETE: ลบ Relay ---
+@app.delete("/api/relays/{relay_id}")
+def delete_relay(relay_id: str, current_user: dict = Depends(verify_admin_role)):
+    try:
+        with get_db_client() as client:
+            result = client.execute("DELETE FROM relays WHERE Relay_ID = ?", [relay_id])
+            if result.rows_affected == 0:
+                raise HTTPException(status_code=404, detail=f"ไม่พบข้อมูล Relay ID: {relay_id}")
+            return {
+                "status": "success",
+                "message": f"ลบข้อมูล Relay ID: {relay_id} สำเร็จโดย Admin!",
+                "deleted_by": current_user["username"]
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"เกิดข้อผิดพลาด: {str(e)}")
+
 @app.get("/api/relays/{plant}")
 def get_relays_by_plant(plant: str, current_user: dict = Depends(get_current_user)):
     with get_db_client() as client:
